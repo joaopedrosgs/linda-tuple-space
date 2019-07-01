@@ -4,7 +4,7 @@ import json
 # este metodo compacta a mensagem
 def pack(data: dict):
     message_json = json.dumps(data)
-    message = f'{len(message_json)}:{message_json}'
+    message = f'{len(message_json)}:{message_json}' # concatena o tamanho junto do json
 
     return message.encode('utf-8')
 
@@ -18,7 +18,7 @@ def unpack(data: str):
         'message': ""
     }
     try:
-        message_struct = json.loads(data)
+        message_struct = json.loads(data) # transforma json na estrutura acima
     except Exception as erro_msg:
         print("Deu erro ao decompactar?: ", erro_msg)
 

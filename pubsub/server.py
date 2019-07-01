@@ -42,11 +42,11 @@ class Server(asyncio.Protocol):
     def __iterate_waiting(topic_struct: dict):
         msg_queue = topic_struct['msg_queue']
         subscribed = topic_struct['subscribed']
-        while len(msg_queue) > 0 and len(subscribed) > 0:
+        while len(msg_queue) > 0 and len(subscribed) > 0: # para casa elemento que possui pelo menos um client inscrito
             message, conn = subscribed.popleft()
             message["message"] = msg_queue[0]
-            conn.write(pack(message))
-            if message["operation"] == 'pop':
+            conn.write(pack(message)) # envia a mensagem
+            if message["operation"] == 'pop': # caso seja um pop/in, então remove o primeiro elemento da queue
                 msg_queue.popleft()
 
     # Este metodo faz uma especie de subscribe
@@ -60,8 +60,8 @@ class Server(asyncio.Protocol):
         data = message['message']
 
         topic_struct = self.__get_topic(author, topic)
-        topic_struct['msg_queue'].append(data)
-        self.__iterate_waiting(topic_struct)
+        topic_struct['msg_queue'].append(data) # coloca a mensagem na fila
+        self.__iterate_waiting(topic_struct) # itera na fila, enviando a nova mensagem para alguem que queira recebe-la
 
     # Metodo chamado caso a operacao seja de peek, ele adiciona o usuario em uma lista de espera e chama a iteracao
     def __peek_op(self, message: dict):
@@ -71,7 +71,7 @@ class Server(asyncio.Protocol):
         topic_struct = self.__get_topic(author, topic)
 
         self.__register_conn(topic_struct, message)
-        self.__iterate_waiting(topic_struct)
+        self.__iterate_waiting(topic_struct) # itera na lista, enviando a resposta
 
     # Metodo chamado caso a operacao seja de pop, ele adiciona o usuario em uma lista de espera e chama a iteracao
     def __pop_op(self, message: dict):
@@ -79,8 +79,8 @@ class Server(asyncio.Protocol):
         topic = message['topic']
 
         topic_struct = self.__get_topic(author, topic)
-        self.__register_conn(topic_struct, message)
-        self.__iterate_waiting(topic_struct)
+        self.__register_conn(topic_struct, message) # adiciona o client na fila, indicando que ele quer receber alguma mensagem
+        self.__iterate_waiting(topic_struct) # itera na lista, enviando a resposta
 
     # Esse metodo desvia o request para seu endpoint correto
     def __parse(self, dataStruct: dict):
@@ -96,7 +96,7 @@ class Server(asyncio.Protocol):
         while len(data) > 0:
             if self.__tamanho_esperado < 0:
 
-                if len(data.split(b':', 1)) == 2:
+                if len(data.split(b':', 1)) == 2: # obtendo o tamanho esperado
                     size, data = data.split(b':', 1)
                     try:
                         self.__tamanho_esperado = int(size)
@@ -105,10 +105,10 @@ class Server(asyncio.Protocol):
 
             self.__buffer = data[:self.__tamanho_esperado]
 
-            if self.__tamanho_esperado > 0 and len(data) >= self.__tamanho_esperado:
+            if self.__tamanho_esperado > 0 and len(data) >= self.__tamanho_esperado: # ja leu tudo que deveria
                 data = data[self.__tamanho_esperado:]
                 self.__tamanho_esperado = -1
-                self.__parse(unpack(self.__buffer.decode('utf-8')))
+                self.__parse(unpack(self.__buffer.decode('utf-8'))) # da unpack e então parse
                 self.__buffer = bytes()
 
     # Define o servidor assincrono
